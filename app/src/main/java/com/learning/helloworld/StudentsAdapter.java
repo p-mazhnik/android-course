@@ -1,9 +1,12 @@
 package com.learning.helloworld;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -13,18 +16,24 @@ import java.util.List;
 
 class StudentViewHolder extends RecyclerView.ViewHolder {
     private TextView nameTextView;
+    private ImageView photoImageView;
     private Student student;
     private StudentsFragment.StudentClickListener studentClickListener;
 
     public StudentViewHolder(@NonNull View itemView, StudentsFragment.StudentClickListener studentClickListener) {
         super(itemView);
         nameTextView = itemView.findViewById(R.id.name);
+        photoImageView = itemView.findViewById(R.id.photo);
         this.studentClickListener = studentClickListener;
     }
 
     void bind(Student student) {
         this.student = student;
-        nameTextView.setText(student.firstName + " " + student.lastName);
+        nameTextView.setText(student.getFirstName() + " " + student.getLastName());
+        if(student.getImgPath() != null) {
+            Bitmap bitmap = BitmapFactory.decodeFile(student.getImgPath());
+            if(bitmap != null) photoImageView.setImageBitmap(bitmap);
+        }
         nameTextView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {

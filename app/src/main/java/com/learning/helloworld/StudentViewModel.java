@@ -21,7 +21,7 @@ public class StudentViewModel extends AndroidViewModel {
     LiveData<List<Student>> getAllStudents() { return mAllStudents; }
 
     public void saveStudent(Student student) {
-        if(student.id == null) {
+        if(student.getId() == null) {
             mLoader.insert(student);
         }
         else {

@@ -39,6 +39,7 @@ public class StudentCardFragment extends Fragment {
     private StudentViewModel mStudentViewModel;
 
     private Student student;
+    private String newImgPath = null;
 
     static StudentCardFragment newInstance() {
         return new StudentCardFragment();
@@ -83,6 +84,10 @@ public class StudentCardFragment extends Fragment {
             student = (Student) getArguments().getSerializable(KEY_STUDENT);
             firstNameTextField.getEditText().setText(student.getFirstName());
             lastNameTextField.getEditText().setText(student.getLastName());
+            if(student.getImgPath() != null) {
+                Bitmap bitmap = BitmapFactory.decodeFile(student.getImgPath());
+                if(bitmap != null) studentImage.setImageBitmap(bitmap);
+            }
             deleteButton.setVisibility(Button.VISIBLE);
         }
         else {
@@ -119,9 +124,10 @@ public class StudentCardFragment extends Fragment {
                     error = true;
                 }
                 if(error) return;
-                if(!(firstName.equals(student.getFirstName()) && lastName.equals(student.getLastName()))){
+                if(!(firstName.equals(student.getFirstName()) && lastName.equals(student.getLastName())) || newImgPath != null){
                     student.setFirstName(firstName);
                     student.setLastName(lastName);
+                    student.setImgPath(newImgPath);
                     mStudentViewModel.saveStudent(student);
                 }
                 getActivity().getSupportFragmentManager().popBackStackImmediate();
@@ -152,7 +158,8 @@ public class StudentCardFragment extends Fragment {
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if(resultCode == Activity.RESULT_OK && requestCode == PROFILE_IMAGE_REQ_CODE) {
             File imgFile = ImagePicker.Companion.getFile(data);
-            Bitmap myBitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
+            newImgPath = imgFile.getAbsolutePath();
+            Bitmap myBitmap = BitmapFactory.decodeFile(newImgPath);
             studentImage.setImageBitmap(myBitmap);
         }
         else if (resultCode == ImagePicker.RESULT_ERROR) {
