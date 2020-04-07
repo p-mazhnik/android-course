@@ -6,9 +6,14 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.Observer;
+import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -19,19 +24,17 @@ import java.util.List;
 
 public class StudentsFragment extends Fragment {
     private RecyclerView studentsView;
+    private FloatingActionButton floatingActionButton;
 
     public interface StudentClickListener {
         void onStudentClicked(Student student);
     }
 
     private StudentClickListener onStudentClickListener;
-    private List<Student> students = new ArrayList<>();
 
     private StudentsAdapter studentsAdapter;
 
-    private StudentsLoadTask studentsLoadTask;
-
-    private StudentsLoadTask.UIListener listener;
+    private StudentViewModel mStudentViewModel;
 
     public View onCreateView(
         LayoutInflater inflater,
@@ -40,21 +43,9 @@ public class StudentsFragment extends Fragment {
     ) {
         View view = inflater.inflate(R.layout.fragment_students, container, false);
 
-        File studentsFile = new File(requireContext().getFilesDir(), "students.txt");
-        listener = new StudentsLoadTask.UIListener() {
-            @Override
-            public void onStudentsLoaded(@NonNull List<Student> students) {
-                studentsAdapter.students = students;
-                studentsAdapter.notifyDataSetChanged();
-            }
-        };
-
-        studentsLoadTask = new StudentsLoadTask(new WeakReference<>(listener));
-        studentsLoadTask.execute(studentsFile);
-
         studentsView = view.findViewById(R.id.students);
         studentsView.setLayoutManager(new LinearLayoutManager(getContext()));
-        studentsAdapter = new StudentsAdapter(students, new StudentClickListener() {
+        studentsAdapter = new StudentsAdapter(new StudentClickListener() {
             @Override
             public void onStudentClicked(Student student) {
                 onStudentClickListener.onStudentClicked(student);
@@ -62,12 +53,31 @@ public class StudentsFragment extends Fragment {
         });
         studentsView.setAdapter(studentsAdapter);
 
+        floatingActionButton = (FloatingActionButton) view.findViewById(R.id.floating_action_button);
+        floatingActionButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // Handle the click.
+                onStudentClickListener.onStudentClicked(null);
+            }
+        });
+
+        mStudentViewModel = new ViewModelProvider(this,
+                new ViewModelProvider.AndroidViewModelFactory(getActivity().getApplication())).get(StudentViewModel.class);
+
         return view;
     }
 
-    public void onDestroy() {
-        studentsLoadTask.cancel(true);
-        super.onDestroy();
+    @Override
+    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
+        super.onActivityCreated(savedInstanceState);
+
+        mStudentViewModel.getAllStudents().observe(this, new Observer<List<Student>>() {
+            @Override
+            public void onChanged(@Nullable final List<Student> students) {
+                studentsAdapter.setStudents(students);
+            }
+        });
     }
 
     static StudentsFragment newInstance(StudentClickListener studentClickListener) {

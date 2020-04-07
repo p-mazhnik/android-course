@@ -42,6 +42,8 @@ public class LoginActivity extends AppCompatActivity {
                 editor.putString(KEY_LOGIN, login);
                 editor.putString(KEY_PASSWORD, password);
                 editor.apply();
+                realLogin = login;
+                realPassword = password;
             }
         });
 

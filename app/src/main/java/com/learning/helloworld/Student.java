@@ -1,22 +1,41 @@
 package com.learning.helloworld;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import android.app.Application;
+
+import androidx.lifecycle.LiveData;
+import androidx.room.ColumnInfo;
+import androidx.room.Entity;
+import androidx.room.Ignore;
+import androidx.room.PrimaryKey;
+
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-class Student {
+@Entity(tableName = Student.TABLE_NAME)
+class Student implements Serializable {
+    @ColumnInfo(name = Student.COLUMN_FIRST_NAME)
     String firstName;
 
+    @ColumnInfo(name = Student.COLUMN_LAST_NAME)
     String lastName;
+
+    @PrimaryKey(autoGenerate = true)
+    @ColumnInfo(name = Student.COLUMN_ID)
+    Long id;
 
     public Student(String firstName, String lastName) {
         this.firstName = firstName;
         this.lastName = lastName;
+    }
+
+    public Student() {
+        this.firstName = null;
+        this.lastName = null;
+    }
+
+    public Long getId() {
+        return id;
     }
 
     public String getFirstName() {
@@ -34,68 +53,72 @@ class Student {
     public void setLastName(String lastName) {
         this.lastName = lastName;
     }
+
+    @Ignore
+    public static final String TABLE_NAME = "students";
+    @Ignore
+    public static final String COLUMN_ID = "id";
+    @Ignore
+    public static final String COLUMN_FIRST_NAME = "first_name";
+    @Ignore
+    public static final String COLUMN_LAST_NAME = "last_name";
 }
 
 class StudentLoader {
-    static List<Student> loadStudents(File file) {
-        if (!file.exists()) {
-            List<Student> students = generateStudents();
-            saveStudents(students, file);
-            return students;
-        }
-        List<String> lines = readLines(file);
-        List<Student> students = new ArrayList<>();
-        for (String line : lines) {
-            if (!line.isEmpty()) {
-                students.add(loadStudent(line));
-            }
-        }
-        return students;
+    private StudentDao mStudentDao;
+    private LiveData<List<Student>> mAllStudents;
+
+    StudentLoader(Application application) {
+        AppDatabase db = AppDatabase.getInstance(application);
+        mStudentDao = db.studentDao();
+        mAllStudents = mStudentDao.getAll();
     }
 
-    static private List<String> readLines(File file) {
-        List<String> lines = new ArrayList<>();
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(file));
-            while (reader.ready()) {
-                String line = reader.readLine();
-                lines.add(line);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        return lines;
-    }
-
-    static private Student loadStudent(String str) {
-        String[] parts = str.split(":");
-        return new Student(parts[0], parts[1]);
+    LiveData<List<Student>> loadStudents() {
+        return mAllStudents;
     }
 
     static private List<Student> generateStudents() {
-        List<Student> students = new ArrayList<>(1000);
-        for (int i = 0; i < 1000; i++) {
+        List<Student> students = new ArrayList<>(10);
+        for (int i = 0; i < 10; i++) {
             students.add(new Student("имя"+i, "фамилия"+i));
         }
         return students;
     }
 
-    static private void saveStudents(List<Student> students, File file) {
-        try {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(file));
-            writer.write("");
-            for (Student student : students) {
-                String line = saveStudent(student);
-                writer.append(line);
-                writer.newLine();
+    void saveStudents(final List<Student> students) {
+        AppDatabase.databaseWriteExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                mStudentDao.insertAll(students);
             }
-            writer.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        });
     }
 
-    static private String saveStudent(Student student) {
-        return student.firstName + ":" + student.lastName;
+    void insert(final Student student) {
+        AppDatabase.databaseWriteExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                mStudentDao.insert(student);
+            }
+        });
+    }
+
+    void update(final Student student) {
+        AppDatabase.databaseWriteExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                mStudentDao.update(student);
+            }
+        });
+    }
+
+    void delete(final Student student) {
+        AppDatabase.databaseWriteExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                mStudentDao.delete(student);
+            }
+        });
     }
 }

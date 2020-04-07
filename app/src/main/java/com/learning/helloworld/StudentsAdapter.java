@@ -35,12 +35,16 @@ class StudentViewHolder extends RecyclerView.ViewHolder {
 }
 
 class StudentsAdapter extends RecyclerView.Adapter<StudentViewHolder> {
-    List<Student> students;
+    List<Student> mStudents;
     private StudentsFragment.StudentClickListener studentClickListener;
 
-    StudentsAdapter(List<Student> students, StudentsFragment.StudentClickListener studentClickListener) {
-        this.students = students;
+    StudentsAdapter(StudentsFragment.StudentClickListener studentClickListener) {
         this.studentClickListener = studentClickListener;
+    }
+
+    void setStudents(List<Student> students){
+        mStudents = students;
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -53,11 +57,14 @@ class StudentsAdapter extends RecyclerView.Adapter<StudentViewHolder> {
 
     @Override
     public void onBindViewHolder(@NonNull StudentViewHolder holder, int position) {
-        holder.bind(students.get(position));
+        holder.bind(mStudents.get(position));
     }
 
     @Override
     public int getItemCount() {
-        return students.size();
+        if(mStudents == null) {
+            return 0;
+        }
+        return mStudents.size();
     }
 }
